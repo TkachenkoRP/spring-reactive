@@ -30,8 +30,9 @@ public class TaskService {
                 .flatMap(this::populateTaskWithUsers);
     }
 
-    public Mono<TaskEntity> save(TaskEntity task) {
+    public Mono<TaskEntity> save(TaskEntity task, String authorId) {
         task.setId(UUID.randomUUID().toString());
+        task.setAuthorId(authorId);
         task.setCreatedAt(Instant.now());
         task.setUpdatedAt(Instant.now());
         task.setObserverIds(new HashSet<>());

@@ -6,6 +6,7 @@ import org.example.springreact.dto.TaskResponse;
 import org.example.springreact.dto.UpsertTaskRequest;
 import org.example.springreact.mapper.TaskMapper;
 import org.example.springreact.service.TaskService;
+import org.example.springreact.service.UserService;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Mono;
 public class TaskHandler {
     private final TaskService taskService;
     private final TaskMapper taskMapper;
+    private final UserService userService;
 
     public Mono<ServerResponse> getAll(ServerRequest request) {
         Flux<TaskResponse> tasks = taskService.findAll().map(taskMapper::entityToResponse);
@@ -36,12 +38,13 @@ public class TaskHandler {
     }
 
     public Mono<ServerResponse> create(ServerRequest request) {
-        Mono<UpsertTaskRequest> task = request.bodyToMono(UpsertTaskRequest.class);
-        Mono<TaskResponse> createdTask = task
-                .map(taskMapper::requestToEntity)
-                .flatMap(taskService::save)
-                .map(taskMapper::entityToResponse);
-        return ServerResponse.ok().body(createdTask, TaskResponse.class);
+        return request.principal()
+                .flatMap(principal -> userService.findByName(principal.getName())
+                        .flatMap(user -> request.bodyToMono(UpsertTaskRequest.class)
+                                .map(taskMapper::requestToEntity)
+                                .flatMap(task -> taskService.save(task, user.getId()))
+                                .map(taskMapper::entityToResponse)
+                                .flatMap(response -> ServerResponse.ok().bodyValue(response))));
     }
 
     public Mono<ServerResponse> update(ServerRequest request) {
