@@ -29,7 +29,7 @@ public class RoutingConfiguration {
                 .POST("/api/functions/tasks", taskHandler::create)
                 .PUT("/api/functions/tasks/{id}", taskHandler::update)
                 .DELETE("/api/functions/tasks/{id}", taskHandler::delete)
-                .POST("/api/functions/tasks/{id}/addObserver/{idObserver}", taskHandler::addObserver)
+                .POST("/api/functions/tasks/{id}/observe", taskHandler::addObserver)
                 .build();
     }
 }

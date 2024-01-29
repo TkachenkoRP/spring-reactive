@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springreact.dto.TaskResponse;
 import org.example.springreact.dto.UpsertTaskRequest;
+import org.example.springreact.entity.UserEntity;
 import org.example.springreact.mapper.TaskMapper;
 import org.example.springreact.service.TaskService;
 import org.example.springreact.service.UserService;
@@ -13,6 +14,8 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.security.Principal;
 
 @Component
 @Slf4j
@@ -39,12 +42,12 @@ public class TaskHandler {
 
     public Mono<ServerResponse> create(ServerRequest request) {
         return request.principal()
-                .flatMap(principal -> userService.findByName(principal.getName())
-                        .flatMap(user -> request.bodyToMono(UpsertTaskRequest.class)
-                                .map(taskMapper::requestToEntity)
-                                .flatMap(task -> taskService.save(task, user.getId()))
-                                .map(taskMapper::entityToResponse)
-                                .flatMap(response -> ServerResponse.ok().bodyValue(response))));
+                .flatMap(this::processPrincipal)
+                .flatMap(user -> request.bodyToMono(UpsertTaskRequest.class)
+                        .map(taskMapper::requestToEntity)
+                        .flatMap(task -> taskService.save(task, user.getId()))
+                        .map(taskMapper::entityToResponse)
+                        .flatMap(response -> ServerResponse.ok().bodyValue(response)));
     }
 
     public Mono<ServerResponse> update(ServerRequest request) {
@@ -64,11 +67,19 @@ public class TaskHandler {
 
     public Mono<ServerResponse> addObserver(ServerRequest request) {
         String id = request.pathVariable("id");
-        String idObserver = request.pathVariable("idObserver");
-        Mono<TaskResponse> task = taskService.addObserver(id, idObserver)
-                .map(taskMapper::entityToResponse);
         Mono<ServerResponse> notFound = ServerResponse.notFound().build();
-        return task.flatMap(t -> ServerResponse.ok().bodyValue(t))
-                .switchIfEmpty(notFound);
+
+        return request.principal()
+                .flatMap(this::processPrincipal)
+                .flatMap(user -> {
+                    Mono<TaskResponse> task = taskService.addObserver(id, user.getId())
+                            .map(taskMapper::entityToResponse);
+                    return task.flatMap(t -> ServerResponse.ok().bodyValue(t))
+                            .switchIfEmpty(notFound);
+                });
+    }
+
+    private Mono<UserEntity> processPrincipal(Principal principal) {
+        return userService.findByName(principal.getName());
     }
 }

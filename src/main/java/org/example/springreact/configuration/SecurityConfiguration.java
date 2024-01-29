@@ -42,13 +42,13 @@ public class SecurityConfiguration {
     private ServerHttpSecurity buildDefaultHttpSecurity(ServerHttpSecurity http) {
         return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange((auth) -> auth
-//                        .pathMatchers("/api/functions/users/**").hasAnyRole("USER", "MANAGER")
-//                        .pathMatchers(HttpMethod.POST, "/api/functions/users").permitAll()
-//                        .pathMatchers(HttpMethod.GET, "/api/functions/tasks/**").hasAnyRole("USER", "MANAGER")
-//                        .pathMatchers(HttpMethod.POST, "/api/functions/tasks/{id}/addObserver").hasAnyRole("USER", "MANAGER")
-//                        .pathMatchers(HttpMethod.POST, "/api/functions/tasks/").hasRole("MANAGER")
-//                        .pathMatchers(HttpMethod.PUT, "/api/functions/tasks/*").hasRole("MANAGER")
-//                        .pathMatchers(HttpMethod.DELETE, "/api/functions/tasks/*").hasRole("MANAGER")
+                        .pathMatchers(HttpMethod.POST, "/api/functions/users").permitAll()
+                        .pathMatchers("/api/functions/users/**").hasAnyRole("USER", "MANAGER")
+                        .pathMatchers(HttpMethod.GET, "/api/functions/tasks/**").hasAnyRole("USER", "MANAGER")
+                        .pathMatchers(HttpMethod.POST, "/api/functions/tasks/{id}/observe").hasAnyRole("USER", "MANAGER")
+                        .pathMatchers(HttpMethod.POST, "/api/functions/tasks").hasRole("MANAGER")
+                        .pathMatchers(HttpMethod.PUT, "/api/functions/tasks/*").hasRole("MANAGER")
+                        .pathMatchers(HttpMethod.DELETE, "/api/functions/tasks/*").hasRole("MANAGER")
                         .pathMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .anyExchange().authenticated())
                 .httpBasic(Customizer.withDefaults());
